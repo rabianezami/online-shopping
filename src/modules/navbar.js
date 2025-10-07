@@ -10,9 +10,7 @@ export function renderNavbar(parent) {
 
   const rightButtons = [
     { label: "Sell with Online Shop", class: "btn btn-custom rounded-3 px-3 py-2" },
-    { label: '<i class="bi bi-search"></i>', class: "btn btn-custom rounded-3 px-3 py-2 search-btn" },
-
-    // 🛒 دکمه سبد خرید
+    { label: '<i class="bi bi-search"></i>', class: "btn btn-custom rounded-3 px-3 py-2" },
     { 
       label: '<i class="bi bi-cart"></i>', 
       class: "btn btn-custom rounded-3 px-3 py-2 position-relative", 
@@ -20,7 +18,6 @@ export function renderNavbar(parent) {
       toggle: "offcanvas", 
       target: "#cartSidebar" 
     },
-
     { label: '<i class="bi bi-heart-fill"></i>', class: "btn btn-custom rounded-3 px-3 py-2", href: "favorites.html" },
     { label: '<i class="bi bi-person"></i>', class: "btn btn-custom rounded-3 px-3 py-2" }
   ];
@@ -58,7 +55,7 @@ export function renderNavbar(parent) {
       <!-- منوی دسکتاپ -->
       <div class="collapse navbar-collapse" id="mainNavbar">
         <ul class="navbar-nav me-auto mb-lg-0 align-items-center"></ul>
-        <div class="d-flex align-items-center gap-2 nav-actions position-relative"></div>
+        <div class="d-flex align-items-center gap-2 nav-actions"></div>
       </div>
     </div>
 
@@ -82,7 +79,7 @@ export function renderNavbar(parent) {
   `;
 
   // =========================
-  // ۳. اضافه کردن لینک‌ها و دکمه‌ها
+  // ۳. اضافه کردن لینک‌ها و دکمه‌ها (دسکتاپ)
   // =========================
   const ul = nav.querySelector(".navbar-nav");
   links.forEach(l => {
@@ -116,51 +113,105 @@ export function renderNavbar(parent) {
   parent.appendChild(nav);
 
   // =========================
-  // ۴. جستجو (انیمیشن در navbar)
+  // ۴. مدیریت موبایل (نمایش/مخفی)
   // =========================
-  const searchBtn = nav.querySelector(".search-btn");
-  const actionsContainer = nav.querySelector(".nav-actions");
+  const mobileMenu = nav.querySelector('#mobileMenu');
+  const mobileToggleButtons = nav.querySelectorAll('.mobile-toggle-buttons button, .mobile-toggle-buttons a');
+  const mobileLogo = nav.querySelector('.mobile-hide-on-toggle');
 
-  if (searchBtn && actionsContainer) {
-    const input = document.createElement("input");
-    input.type = "text";
-    input.placeholder = "Search...";
-    input.className = "search-input";
-    actionsContainer.appendChild(input);
-
-    searchBtn.addEventListener("click", () => {
-      input.classList.toggle("active");
-      if (input.classList.contains("active")) input.focus();
-    });
-  }
-
-  // =========================
-  // ۵. موبایل کنترل
-  // =========================
-  const mobileMenu = nav.querySelector("#mobileMenu");
-  const mobileToggleButtons = nav.querySelectorAll(".mobile-toggle-buttons button, .mobile-toggle-buttons a");
-  const mobileLogo = nav.querySelector(".mobile-hide-on-toggle");
-
-  mobileMenu.addEventListener("show.bs.collapse", () => {
-    mobileToggleButtons.forEach(btn => btn.style.display = "none");
-    mobileLogo.classList.add("hide");
+  mobileMenu.addEventListener('show.bs.collapse', () => {
+    mobileToggleButtons.forEach(btn => btn.style.display = 'none');
+    mobileLogo.classList.add('hide');
   });
 
-  mobileMenu.addEventListener("hide.bs.collapse", () => {
-    mobileToggleButtons.forEach(btn => btn.style.display = "inline-block");
-    mobileLogo.classList.remove("hide");
+  mobileMenu.addEventListener('hide.bs.collapse', () => {
+    mobileToggleButtons.forEach(btn => btn.style.display = 'inline-block');
+    mobileLogo.classList.remove('hide');
   });
 
-  window.addEventListener("resize", () => {
+  window.addEventListener('resize', () => {
     if (window.innerWidth >= 992) {
-      mobileMenu.classList.remove("show");
-      mobileMenu.setAttribute("aria-expanded", "false");
+      mobileMenu.classList.remove('show');
+      mobileMenu.setAttribute('aria-expanded', 'false');
 
       const bsCollapse = bootstrap.Collapse.getInstance(mobileMenu);
       if (bsCollapse) bsCollapse.hide();
 
-      mobileToggleButtons.forEach(btn => btn.style.display = "inline-block");
-      mobileLogo.classList.remove("hide");
+      mobileToggleButtons.forEach(btn => btn.style.display = 'inline-block');
+      mobileLogo.classList.remove('hide');
     }
   });
+
+  // =========================
+  // ۵. جستجو دسکتاپ
+  // =========================
+  let searchBtn = actions.querySelector('button .bi-search')?.closest('button')
+               || actions.querySelector('a .bi-search')?.closest('a');
+
+  if (!searchBtn) {
+    const anyIcon = nav.querySelector('.bi-search');
+    if (anyIcon) {
+      const possibleBtn = anyIcon.closest('button, a');
+      if (possibleBtn && possibleBtn.parentElement === actions) {
+        searchBtn = possibleBtn;
+      }
+    }
+  }
+
+  const searchWrapper = document.createElement('div');
+  searchWrapper.className = 'search-wrapper';
+  searchWrapper.innerHTML = `<input type="text" class="search-input" placeholder="Search..." aria-label="Search" />`;
+
+  if (searchBtn && searchBtn.parentElement === actions) {
+    actions.insertBefore(searchWrapper, searchBtn);
+  } else {
+    actions.appendChild(searchWrapper);
+  }
+
+  let searchOpen = false;
+  if (searchBtn) {
+    searchBtn.addEventListener('click', () => {
+      searchOpen = !searchOpen;
+      searchWrapper.classList.toggle('active', searchOpen);
+      if (searchOpen) searchWrapper.querySelector('.search-input').focus();
+      else searchWrapper.querySelector('.search-input').blur();
+    });
+
+    searchBtn.addEventListener('dblclick', () => {
+      searchOpen = false;
+      searchWrapper.classList.remove('active');
+      searchWrapper.querySelector('.search-input').blur();
+    });
+  } else {
+    searchWrapper.addEventListener('click', () => {
+      searchOpen = true;
+      searchWrapper.classList.add('active');
+      searchWrapper.querySelector('.search-input').focus();
+    });
+  }
+
+  // =========================
+  // ۶. جستجو موبایل
+  // =========================
+  const mobileSearchBtn = nav.querySelector('.mobile-toggle-buttons .bi-search')?.closest('button');
+  if (mobileSearchBtn) {
+    const mobileSearchWrapper = document.createElement('div');
+    mobileSearchWrapper.className = 'search-wrapper mobile-search-wrapper';
+    mobileSearchWrapper.innerHTML = `<input type="text" class="search-input" placeholder="Search..." aria-label="Search" />`;
+    mobileSearchBtn.insertAdjacentElement('afterend', mobileSearchWrapper);
+
+    let mobileSearchOpen = false;
+    mobileSearchBtn.addEventListener('click', () => {
+      mobileSearchOpen = !mobileSearchOpen;
+      mobileSearchWrapper.classList.toggle('active', mobileSearchOpen);
+      if (mobileSearchOpen) mobileSearchWrapper.querySelector('.search-input').focus();
+      else mobileSearchWrapper.querySelector('.search-input').blur();
+    });
+
+    mobileSearchBtn.addEventListener('dblclick', () => {
+      mobileSearchOpen = false;
+      mobileSearchWrapper.classList.remove('active');
+      mobileSearchWrapper.querySelector('.search-input').blur();
+    });
+  }
 }
